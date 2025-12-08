@@ -33,7 +33,8 @@ is capable of yielding H200-level latency on consumer-grade GPUs (RTX Ada).
 ### Usage
 
 The recommended way to use FlashHead is vLLM with the custom generation
-pipeline provided in this package.
+pipeline provided in this package. Note that the code might need to be run
+within a `__main__` block due to multiprocessing. 
 
 #### vLLM
 
@@ -43,12 +44,13 @@ from embedl.models.vllm import LLM
 
 model_id = "embedl/Llama-3.2-1B-Instruct-FlashHead-W4A16"
 
-sampling = SamplingParams(max_tokens=128, temperature=0.0)
-llm = LLM(model=model_id, trust_remote_code=True)
+if __name__ == "__main__":
+    sampling = SamplingParams(max_tokens=128, temperature=0.0)
+    llm = LLM(model=model_id, trust_remote_code=True)
 
-prompt = "Write a haiku about coffee."
-output = llm.generate([prompt], sampling)
-print(output[0].outputs[0].text)
+    prompt = "Write a haiku about coffee."
+    output = llm.generate([prompt], sampling)
+    print(output[0].outputs[0].text)
 ```
 
 ## Roadmap
@@ -67,7 +69,7 @@ Contact us (see below).
 
 ## License
 
-Please check out the license file for details.
+Please check out the license file for details or contact legal@embedl.com
 
 ## Contact
 
