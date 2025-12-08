@@ -43,7 +43,7 @@ def _make_engine(model: str, *, max_model_len: int = 28592) -> AsyncLLM:
 
 def _make_sampling_params(
     *,
-    max_tokens: int = 1024,
+    max_tokens: int = 4096,
     temperature: float = 0.8,
     top_p: float = 0.95,
     seed: Optional[int] = 42,
