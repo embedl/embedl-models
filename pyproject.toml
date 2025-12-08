@@ -1,0 +1,16 @@
+# Copyright (C) 2025 Embedl AB
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embedl_models"
+description = "Efficient deep learning models for the edge."
+version = "0.0.4"
+dependencies = ["vllm==0.10.2", "flashinfer-python"]
+requires-python = ">= 3.10"
+
+[tool.black]
+line-length = 79
+target-version = ["py310"]
