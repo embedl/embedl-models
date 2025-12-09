@@ -4,7 +4,7 @@
 
 import json
 import os
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple, Union
 
 import torch
 from huggingface_hub import hf_hub_download
@@ -148,6 +148,9 @@ class FlashHead(nn.Module):
         A mapping between cluster centroid index and token index.
     :param n_probes:
         Number of probes to use.
+    :param special_token_ids:
+        Tokens to process independently of clusters. Useful for
+        models when clustering does not handle certain tokens well.
     """
 
     def __init__(
@@ -156,6 +159,7 @@ class FlashHead(nn.Module):
         centroids: torch.Tensor,
         vocab_maps_tensor: torch.Tensor,
         n_probes: Optional[int] = None,
+        special_token_ids: Optional[Union[int, Iterable[int]]] = None,
     ):
         super().__init__()
 
@@ -188,6 +192,25 @@ class FlashHead(nn.Module):
         )
         self.register_buffer(
             "output_buffer", torch.zeros((1, 1), dtype=torch.int64)
+        )
+
+        special_token_list = []
+        if special_token_ids is None:
+            special_token_list = []
+        elif isinstance(special_token_ids, int):
+            special_token_list = [special_token_ids]
+        else:
+            special_token_list = list(special_token_ids)
+
+        vocab_size = int(self.original_shape[0])
+        special_token_list = [
+            int(t) for t in special_token_list if 0 <= int(t) < vocab_size
+        ]
+
+        self.register_buffer(
+            "special_token_ids_tensor",
+            torch.tensor(special_token_list, dtype=torch.int64),
+            persistent=False,
         )
 
     def _get_cluster_probs(self, hidden_states, temperature=1.0):
@@ -233,6 +256,12 @@ class FlashHead(nn.Module):
         cluster_indices = top_clusters[0, 0]
         maps = self.vocab_maps_tensor.index_select(0, cluster_indices)
         indices = maps.flatten()
+
+        if self.special_token_ids_tensor.numel() > 0:
+            special_ids = self.special_token_ids_tensor.to(
+                device=indices.device
+            )
+            indices = torch.unique(torch.cat([indices, special_ids], dim=0))
 
         mapping = None
         if use_identical_tiebreak:
@@ -297,12 +326,17 @@ class FlashHead(nn.Module):
             if use_identical_tiebreak:
                 cluster_token_idx = mapping[cluster_token_idx]
 
-        cap = self.row_indices.shape[1]
-        cluster_index = cluster_token_idx // cap
-        relative_pos = cluster_token_idx % cap
-        vocab_index = self.vocab_maps_tensor[
-            top_clusters[0, 0, cluster_index], relative_pos
-        ]
-        self.output_buffer[0][0] = vocab_index
+        cluster_indices = top_clusters[0, 0]
+        maps = self.vocab_maps_tensor.index_select(0, cluster_indices)
+        indices = maps.flatten().to(torch.int64)
+        if self.special_token_ids_tensor.numel() > 0:
+            special_ids = self.special_token_ids_tensor.to(
+                device=indices.device
+            )
+            indices = torch.unique(torch.cat([indices, special_ids], dim=0))
+        if use_identical_tiebreak:
+            indices = indices.sort().values
 
+        vocab_index = indices[cluster_token_idx]
+        self.output_buffer[0][0] = vocab_index.item()
         return self.output_buffer

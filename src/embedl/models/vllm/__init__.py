@@ -174,8 +174,11 @@ def _load_flash_head_from_checkpoint(
     flash_head = FlashHead(
         dummy_lm_head,
         **get_flash_head_parameters(
-            dummy_lm_head, cache_dir=cache_dir, model_or_dir=model
+            dummy_lm_head,
+            cache_dir=cache_dir,
+            model_or_dir=model,
         ),
+        special_token_ids=config.flash_head_special_token_ids,
     ).to(device=device, dtype=dtype)
 
     print(
