@@ -6,6 +6,7 @@ import asyncio
 import time
 import uuid
 from typing import Optional
+import argparse
 
 from embedl.models.vllm import AsyncLLM
 
@@ -43,7 +44,7 @@ def _make_engine(model: str, *, max_model_len: int = 28592) -> AsyncLLM:
 
 def _make_sampling_params(
     *,
-    max_tokens: int = 4096,
+    max_tokens: int = 1024,
     temperature: float = 0.8,
     top_p: float = 0.95,
     seed: Optional[int] = 42,
@@ -115,3 +116,38 @@ async def run_repl(
 
     finally:
         engine.shutdown()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="FlashHead vLLM interactive chat"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=False,
+        default="embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16",
+        help="Model name or local path (e.g., embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16",
+    )
+    parser.add_argument(
+        "--max-model-len",
+        type=int,
+        default=28592,
+        help="Max model context length",
+    )
+    parser.add_argument(
+        "--system",
+        type=str,
+        default="",
+        help="Optional system message prefix before the chat history.",
+    )
+
+    args = parser.parse_args()
+
+    asyncio.run(
+        run_repl(
+            model=args.model,
+            max_model_len=args.max_model_len,
+            system=args.system,
+        )
+    )
