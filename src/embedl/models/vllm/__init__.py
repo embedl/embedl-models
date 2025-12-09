@@ -1,5 +1,7 @@
 # Copyright (C) 2025 Embedl AB
+
 """vLLM integration for FlashHead."""
+
 import importlib
 import json
 import os
@@ -12,7 +14,7 @@ from safetensors.torch import load_file
 from torch import nn
 from transformers import AutoConfig
 
-from embedl_llm.flash_head import FlashHead, get_flash_head_parameters
+from embedl.models.flash_head import FlashHead, get_flash_head_parameters
 from vllm import LLM as _LLM
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.v1.engine.async_llm import AsyncLLM as _AsyncLLM
@@ -31,11 +33,11 @@ def _patch_vllm_module(target_path, replacement_module):
 
 
 _patch_vllm_module(
-    "vllm.v1.sample.sampler", "embedl_llm.vllm.patching.sampler"
+    "vllm.v1.sample.sampler", "embedl.models.vllm.patching.sampler"
 )
 _patch_vllm_module(
     "vllm.model_executor.layers.logits_processor",
-    "embedl_llm.vllm.patching.logits_processor",
+    "embedl.models.vllm.patching.logits_processor",
 )
 
 
