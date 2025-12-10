@@ -2,16 +2,16 @@
 
 """Creates an interactive session with vLLM."""
 
+import argparse
 import asyncio
 import time
 import uuid
 from typing import Optional
-import argparse
-
-from embedl.models.vllm import AsyncLLM
 
 from vllm import SamplingParams
 from vllm.sampling_params import RequestOutputKind
+
+from embedl.models.vllm import AsyncLLM
 
 
 async def _stream_once(
