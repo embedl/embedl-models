@@ -43,7 +43,7 @@ python3 -m embedl.models.vllm.demo
 Other models can be selected by specifying `--model embedl/<model>` with FlashHead.
 
 Please checkout the models and how to use them (with vLLM on NVIDIA GPUs) at
-[embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16](https://huggingface.co/embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16)
+[https://huggingface.co/embedl/](https://huggingface.co/embedl/)
 
 ## Roadmap
 

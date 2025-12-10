@@ -9,8 +9,6 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 import torch
-from transformers import AutoTokenizer
-
 import vllm.envs as envs
 from vllm.distributed import (tensor_model_parallel_all_gather,
                               tensor_model_parallel_gather)
@@ -26,7 +24,6 @@ if envs.VLLM_LOGITS_PROCESSOR_THREADS is not None:
     _logits_processor_threadpool = ThreadPoolExecutor(
         envs.VLLM_LOGITS_PROCESSOR_THREADS
     )
-
 
 
 FLASH_HEAD = None
