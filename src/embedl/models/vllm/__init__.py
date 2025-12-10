@@ -291,20 +291,30 @@ class LLM(_LLM):
     registered before model initialization. It also defaults GPU memory
     utilization to 0.75 so FlashHead fits comfortably.
 
-    :param model: The model id or local path.
-    :param args: Positional args forwarded to vLLM LLM.
-    :param kwargs: Keyword args forwarded to vLLM LLM (gpu_memory_utilization is
-                   set to 0.75 to fit FlashHead unless explicitly provided).
+    :param model:
+        The model id or local path.
+    :param gpu_memory_utilization:
+        GPU memory utilization, defaults to 0.75.
+    :param args:
+        Positional args forwarded to vLLM LLM.
+    :param kwargs:
+        Keyword args forwarded to vLLM LLM.
     """
 
-    def __init__(self, model: str, *args, **kwargs):
+    def __init__(
+        self, model: str, gpu_memory_utilization: float = 0.75, *args, **kwargs
+    ):
         model = _create_and_update_model(model)
         flash_head = _load_flash_head_from_checkpoint(model)
         _set_flash_head(flash_head)
 
         # Default to 0.75 unless caller overrides
-        kwargs.setdefault("gpu_memory_utilization", 0.75)
-        super().__init__(model=model, *args, **kwargs)
+        super().__init__(
+            model=model,
+            *args,
+            gpu_memory_utilization=gpu_memory_utilization,
+            **kwargs,
+        )
 
 
 class AsyncLLM(_AsyncLLM):
@@ -318,18 +328,25 @@ class AsyncLLM(_AsyncLLM):
     vLLM async engines are created via `from_engine_args`, so this class
     implements `__new__` and returns an instance produced by vLLM.
 
-    :param model: The model id or local path.
-    :param kwargs: Keyword args forwarded into AsyncEngineArgs (gpu_memory_utilization
-                   is set to 0.75 to fit FlashHead unless explicitly provided)
+    :param model:
+        The model id or local path.
+    :param gpu_memory_utilization:
+        GPU memory utilization, defaults to 0.75.
+    :param kwargs:
+        Keyword args forwarded into AsyncEngineArgs.
     """
 
-    def __new__(cls, model: str, **kwargs):
+    def __new__(
+        cls, model: str, gpu_memory_utilization: float = 0.75, **kwargs
+    ):
         model = _create_and_update_model(model)
         flash_head = _load_flash_head_from_checkpoint(model)
         _set_flash_head(flash_head)
 
-        kwargs.setdefault("gpu_memory_utilization", 0.75)
-
-        engine_args = AsyncEngineArgs(model=model, **kwargs)
+        engine_args = AsyncEngineArgs(
+            model=model,
+            gpu_memory_utilization=gpu_memory_utilization,
+            **kwargs,
+        )
         engine = _AsyncLLM.from_engine_args(engine_args)
         return engine
