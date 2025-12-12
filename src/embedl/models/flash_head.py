@@ -4,12 +4,14 @@
 
 import json
 import os
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Union
 
 import torch
 from huggingface_hub import hf_hub_download
 from safetensors.torch import load_file
 from torch import nn
+
+from embedl.models import DEVICE
 
 
 def _resolve_asset(model_or_dir: str, relative_path: str) -> str:
@@ -25,7 +27,7 @@ def _get_centroids(
     lm_head: nn.Linear,
     model_or_dir: str,
     cache_dir: str,
-) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+) -> Optional[tuple[torch.Tensor, torch.Tensor]]:
     original_shape = lm_head.weight.shape  # (vocab, hidden)
 
     cache_file_rel = os.path.join(cache_dir, "clustering_cache.safetensors")
@@ -86,16 +88,16 @@ def get_flash_head_parameters(
     cache_dir: str,
     model_or_dir: str,
     n_clusters: Optional[int] = None,
-) -> Tuple[torch.Tensor]:
+) -> tuple[torch.Tensor]:
     """
     Get parameters for the FlashHead layer.
 
     :param lm_head:
         The language model head to replace.
-    :param model_or_dir:
-        The model directory.
     :param cache_dir:
         Directory to flash head artifacts.
+    :param model_or_dir:
+        The model directory.
     :param n_clusters:
         The number of clusters.
     :return:
@@ -213,7 +215,9 @@ class FlashHead(nn.Module):
             persistent=False,
         )
 
-    def _get_cluster_probs(self, hidden_states, temperature=1.0):
+    def _get_cluster_probs(
+        self, hidden_states: torch.Tensor, temperature: float = 1.0
+    ) -> torch.Tensor:
         hidden_states_norm = hidden_states
         similarities = torch.nn.functional.linear(
             hidden_states_norm, self.centroids.t(), bias=None
@@ -238,7 +242,7 @@ class FlashHead(nn.Module):
             )
             top_clusters = sampled_indices.view(B, T, self.n_probes)
         else:
-            similarities = self.cluster_linear(hidden_states)
+            similarities = self.cluster_linear(hidden_states.to(DEVICE))
             _, top_clusters = torch.topk(similarities, k=self.n_probes, dim=-1)
         return top_clusters
 
@@ -247,7 +251,7 @@ class FlashHead(nn.Module):
         hidden_states: torch.Tensor,
         top_clusters: torch.Tensor,
         use_identical_tiebreak: bool,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
         if top_clusters.shape[1] > 1 or top_clusters.shape[0] > 1:
             raise NotImplementedError(
                 "Use original lm head for seq-len or bs > 1"
@@ -271,14 +275,17 @@ class FlashHead(nn.Module):
         result = self.original_lm_head.weight.index_select(0, indices)
 
         final_result = (
-            torch.nn.functional.linear(hidden_states, result, bias=None),
+            torch.nn.functional.linear(
+                hidden_states.to(DEVICE), result, bias=None
+            ),
             mapping,
         )
         return final_result
 
-    def forward(self, _hidden_states: torch.Tensor) -> torch.Tensor:
+    def forward(self, _hidden_states: torch.Tensor):
+        """Guard for forward method."""
         raise ValueError(
-            "Forward method not supported, please use get_next_token"
+            "Forward method not supported, please use `get_next_token`."
         )
 
     def get_next_token(
