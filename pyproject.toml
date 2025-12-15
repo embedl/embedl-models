@@ -7,8 +7,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "embedl_models"
 description = "Efficient deep learning models for the edge."
-version = "0.0.4"
-dependencies = ["vllm==0.10.2", "flashinfer-python"]
+version = "2025.12.0"
+dependencies = ["vllm==0.12.0", "accelerate==1.12.0"]
 requires-python = ">= 3.10"
 
 [tool.black]
