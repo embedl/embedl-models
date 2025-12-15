@@ -10,19 +10,23 @@ from typing import Optional
 
 import torch
 import vllm.envs as envs
-from vllm.distributed import (tensor_model_parallel_all_gather,
-                              tensor_model_parallel_gather)
+from vllm.distributed import (
+    tensor_model_parallel_all_gather,
+    tensor_model_parallel_gather,
+)
 from vllm.model_executor.custom_op import CustomOp
-from vllm.model_executor.layers.vocab_parallel_embedding import \
-    VocabParallelEmbedding
-from vllm.model_executor.sampling_metadata import SamplingMetadata
+from vllm.model_executor.layers.vocab_parallel_embedding import (
+    VocabParallelEmbedding,
+)
+from vllm.v1.sample.metadata import SamplingMetadata
+
 from vllm.platforms import current_platform
 
 _logits_processor_threadpool: Optional[ThreadPoolExecutor] = None
 
-if envs.VLLM_LOGITS_PROCESSOR_THREADS is not None:
+if envs.VLLM_MEDIA_LOADING_THREAD_COUNT is not None:
     _logits_processor_threadpool = ThreadPoolExecutor(
-        envs.VLLM_LOGITS_PROCESSOR_THREADS
+        envs.VLLM_MEDIA_LOADING_THREAD_COUNT
     )
 
 
