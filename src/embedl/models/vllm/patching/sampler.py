@@ -8,15 +8,20 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-
-from vllm.config import LogprobsMode
-from vllm.utils import is_pin_memory_available
+from vllm.config.model import LogprobsMode
 from vllm.v1.outputs import LogprobsTensors, SamplerOutput
 from vllm.v1.sample.metadata import SamplingMetadata
 from vllm.v1.sample.ops.bad_words import apply_bad_words
 from vllm.v1.sample.ops.logprobs import batched_count_greater_than
 from vllm.v1.sample.ops.penalties import apply_all_penalties
 from vllm.v1.sample.ops.topk_topp_sampler import TopKTopPSampler
+
+try:
+    # Path for vLLM v0.12.x and newer
+    from vllm.utils.platform_utils import is_pin_memory_available
+except ImportError:
+    # Fallback path for vLLM v0.11.x and older
+    from vllm.utils import is_pin_memory_available
 
 _SAMPLING_EPS = 1e-5
 
@@ -62,9 +67,7 @@ class Sampler(nn.Module):
     9. Return the final `SamplerOutput`.
     """
 
-    def __init__(
-        self, logprobs_mode: LogprobsMode = LogprobsMode.RAW_LOGPROBS
-    ):
+    def __init__(self, logprobs_mode: LogprobsMode = "raw_logprobs"):
         super().__init__()
         self.topk_topp_sampler = TopKTopPSampler(logprobs_mode)
         self.pin_memory = is_pin_memory_available()
@@ -87,9 +90,9 @@ class Sampler(nn.Module):
         # is used for sampling (after penalties and temperature scaling).
         num_logprobs = sampling_metadata.max_num_logprobs
         if num_logprobs is not None:
-            if self.logprobs_mode == LogprobsMode.RAW_LOGPROBS:
+            if self.logprobs_mode == "raw_logprobs":
                 raw_logprobs = self.compute_logprobs(logits)
-            elif self.logprobs_mode == LogprobsMode.RAW_LOGITS:
+            elif self.logprobs_mode == "raw_logits":
                 raw_logprobs = logits.clone()
 
         # Use float32 for the logits.
@@ -171,9 +174,9 @@ class Sampler(nn.Module):
             if sampling_metadata.all_greedy:
                 processed_logprobs = None
                 if sampling_metadata.max_num_logprobs is not None:
-                    if self.logprobs_mode == LogprobsMode.PROCESSED_LOGITS:
+                    if self.logprobs_mode == "processed_logits":
                         processed_logprobs = logits
-                    elif self.logprobs_mode == LogprobsMode.PROCESSED_LOGPROBS:
+                    elif self.logprobs_mode == "processed_logprobs":
                         processed_logprobs = self.compute_logprobs(logits)
                 return greedy_sampled, processed_logprobs
 

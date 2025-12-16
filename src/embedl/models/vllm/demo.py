@@ -2,16 +2,16 @@
 
 """Creates an interactive session with vLLM."""
 
+import argparse
 import asyncio
 import time
 import uuid
 from typing import Optional
-import argparse
-
-from embedl.models.vllm import AsyncLLM
 
 from vllm import SamplingParams
 from vllm.sampling_params import RequestOutputKind
+
+from embedl.models.vllm import AsyncLLM
 
 
 async def _stream_once(
@@ -38,8 +38,17 @@ async def _stream_once(
     return "".join(full_text_parts)
 
 
-def _make_engine(model: str, *, max_model_len: int = 28592) -> AsyncLLM:
-    return AsyncLLM(model, max_model_len=max_model_len)
+def _make_engine(
+    model: str,
+    *,
+    gpu_memory_utilization: float = 0.75,
+    max_model_len: int = 28592,
+) -> AsyncLLM:
+    return AsyncLLM(
+        model,
+        gpu_memory_utilization=gpu_memory_utilization,
+        max_model_len=max_model_len,
+    )
 
 
 def _make_sampling_params(
@@ -63,6 +72,7 @@ def _make_sampling_params(
 async def run_repl(
     *,
     model: str,
+    gpu_memory_utilization: float = 0.75,
     max_model_len: int = 28592,
     system: str = "",
     sampling_params: Optional[SamplingParams] = None,
@@ -80,10 +90,15 @@ async def run_repl(
 
     :param model: Model name or local filesystem path.
     :param max_model_len: Max context length passed to AsyncLLM.
+    :param gpu_memory_utilization: GPU memory utilization, defaults to 0.75.
     :param system: Optional system prefix placed before the chat history.
     :param sampling_params: Optional SamplingParams override.
     """
-    engine = _make_engine(model, max_model_len=max_model_len)
+    engine = _make_engine(
+        model,
+        gpu_memory_utilization=gpu_memory_utilization,
+        max_model_len=max_model_len,
+    )
     sp = sampling_params or _make_sampling_params()
 
     print("Interactive AsyncLLM streaming REPL")
@@ -130,6 +145,13 @@ if __name__ == "__main__":
         help="Model name or local path (e.g., embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16",
     )
     parser.add_argument(
+        "--gpu-memory-utilization",
+        type=float,
+        required=False,
+        default=0.75,
+        help="GPU memory utilization.",
+    )
+    parser.add_argument(
         "--max-model-len",
         type=int,
         default=28592,
@@ -147,6 +169,7 @@ if __name__ == "__main__":
     asyncio.run(
         run_repl(
             model=args.model,
+            gpu_memory_utilization=args.gpu_memory_utilization,
             max_model_len=args.max_model_len,
             system=args.system,
         )
