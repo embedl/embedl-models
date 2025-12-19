@@ -105,7 +105,9 @@ def _update_config(path: str):
         json.dump(config, f, indent=4)
 
 
-def _create_and_update_model(model: str) -> str:
+def _create_and_update_model(
+    model: str,
+) -> str:
     """Create a local model and update its config.
 
     :param model:
@@ -124,12 +126,10 @@ def _create_and_update_model(model: str) -> str:
         local_path = base_tmp / base_name
 
         if local_path.exists():
-            logger.info(
-                "Local model already exists at %s, skipping copy", local_path
-            )
-        else:
-            logger.info("Copying local model from %s to %s", model, local_path)
-            shutil.copytree(model, local_path)
+            shutil.rmtree(local_path)
+
+        logger.info("Copying local model from %s to %s", model, local_path)
+        shutil.copytree(model, local_path)
 
     # Case 2: model is a Hugging Face repo ID
     else:
