@@ -2,7 +2,10 @@
 
 """Embedl models package."""
 
+import os
 import torch
+
+os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 
 ERROR_MSG = """
 FlashHead uses a custom generation loop that is not yet supported by transformers.
