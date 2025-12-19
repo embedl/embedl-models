@@ -7,7 +7,7 @@ import asyncio
 import time
 import uuid
 from typing import Optional
-
+import os
 from vllm import SamplingParams
 from vllm.sampling_params import RequestOutputKind
 
@@ -69,6 +69,25 @@ def _make_sampling_params(
     )
 
 
+def _format_gemma_prompt(system: str, history: list[tuple[str, str]]) -> str:
+    GEMMA_BOS = "<bos>"
+    START = "<start_of_turn>"
+    END = "<end_of_turn>"
+
+    parts = [GEMMA_BOS]
+
+    if system:
+        parts.append(f"{START}system\n{system.strip()}\n{END}")
+
+    for role, content in history:
+        role = "model" if role == "assistant" else role
+        parts.append(f"{START}{role}\n{content.strip()}\n{END}")
+
+    # Open assistant turn
+    parts.append(f"{START}model\n")
+    return "\n".join(parts)
+
+
 async def run_repl(
     *,
     model: str,
@@ -104,7 +123,7 @@ async def run_repl(
     print("Interactive AsyncLLM streaming REPL")
     print("Type /exit to quit, /reset to clear chat history.\n")
 
-    history: list[str] = []
+    history = []
 
     try:
         while True:
@@ -118,15 +137,21 @@ async def run_repl(
 
             if user.lower() == "/reset":
                 history.clear()
+                os.system("cls" if os.name == "nt" else "clear")
                 print("(history cleared)\n")
                 continue
 
-            history.append(f"User: {user}\nAssistant:")
-            full_prompt = system + "\n".join(history)
-
-            assistant_reply = await _stream_once(engine, full_prompt, sp)
-
-            history[-1] = f"User: {user}\nAssistant: {assistant_reply}"
+            if "gemma" in model:
+                history.append(("user", user))
+                full_prompt = _format_gemma_prompt(system, history)
+                assistant_reply = await _stream_once(engine, full_prompt, sp)
+                history.append(("assistant", assistant_reply))
+                full_prompt = _format_gemma_prompt(system, history)
+            else:
+                history.append(f"User: {user}\nAssistant:")
+                full_prompt = system + "\n".join(history)
+                assistant_reply = await _stream_once(engine, full_prompt, sp)
+                history[-1] = f"User: {user}\nAssistant: {assistant_reply}"
             print()
 
     finally:
@@ -141,7 +166,7 @@ if __name__ == "__main__":
         "--model",
         type=str,
         required=False,
-        default="embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16",
+        default="embedl/gemma-3-270m-it-FlashHead",
         help="Model name or local path (e.g., embedl/Llama-3.2-3B-Instruct-FlashHead-W4A16",
     )
     parser.add_argument(
