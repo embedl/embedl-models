@@ -116,6 +116,11 @@ def _create_and_update_model(
         The path to the local model with custom config that can be loaded by
         vLLM.
     """
+    config = AutoConfig.from_pretrained(model)
+
+    if not hasattr(config, "flash_head_cache_dir"):
+        return model
+
     base_tmp = Path("/tmp/embedl_flash_head")
 
     logger.info("Preparing local model for '%s'", model)
