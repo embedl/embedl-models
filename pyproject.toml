@@ -6,10 +6,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "embedl_models"
-description = "Efficient deep learning models for the edge."
-version = "2025.12.1"
+description = "⛔ DEPRECATED -- use flash-head instead (pip install flash-head)"
+version = "2026.4.1"
 dependencies = ["vllm>=0.11.0, <=0.13.0", "accelerate==1.12.0"]
 requires-python = ">= 3.10"
+classifiers = [
+    "Development Status :: 7 - Inactive",
+]
 
 [tool.black]
 line-length = 79

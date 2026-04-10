@@ -1,63 +1,26 @@
 <!-- # Copyright (C) 2025 Embedl AB -->
 
-# Embedl models
+# ⛔ DEPRECATED -- use [`flash-head`](https://github.com/embedl/flash-head) instead
 
-Optimized AI models for the edge by [Embedl](https://www.embedl.com/).
+> **This package is deprecated.** FlashHead is now available as a standalone vLLM plugin that activates automatically - no custom imports, no Docker images.
+>
+> ```bash
+> pip install flash-head
+> vllm serve embedl/Qwen3-1.7B-FlashHead-W4A16
+> ```
+>
+> See the [flash-head repo](https://github.com/embedl/flash-head) for documentation and the [FlashHead model collection](https://huggingface.co/collections/embedl/flashhead) for available models.
 
-## Installation
+---
 
-The package provides optimized models for the edge and can be installed with
-```
-pip install embedl-models
-```
+## Migration
 
-## Models
-
-## FlashHead - efficient langugage models head
-
-Optimized versions of langugage models using FlashHead, Embedl’s efficient
-replacement for the traditional language-model head. FlashHead drastically
-reduces size while preserving accuracy, enabling H200-level latency on consumer
-GPUs (RTX Ada generation).
-
-This model is designed for low-latency inference on NVIDIA RTX GPUs, using a
-combination of:
-- FlashHead
-- Mixed-precision quantization (W4A16)
-- Custom vLLM generation
-
-FlashHead produces outputs that match the baseline models within rounding error
-on standard evaluations (MMLU-Pro, HellaSwag, GSM8K etc.). Overall, this model
-is capable of yielding H200-level latency on consumer-grade GPUs (RTX Ada).
-
-### Usage
-
-The recommended way to use FlashHead is vLLM with the custom generation
-pipeline provided in this package.
-
-A simple chat interface can be launched with the default model as:
-```
-python3 -m embedl.models.vllm.demo 
-```
-
-Other models can be selected by specifying `--model embedl/<model>` with FlashHead.
-
-Please checkout the models and how to use them (with vLLM on NVIDIA GPUs) at
-[https://huggingface.co/embedl/](https://huggingface.co/embedl/)
-
-## Roadmap
-
-The following improvements are planned for upcoming releases:
-
-- HuggingFace transformers pipeline
-- Benchmarking via vLLM CLI (for detailed latency benchmarking)
-- Support for lm-eval-harness (for detailed accuracy measurements)
-- Upstream support of models in transformers and vllm
-- Compatibility with GGUF, MLC, Llama.cpp, TGI etc.
-- Support for additional inference toolchains and devices
-
-Interested in early access to new releases? Missing something?
-Contact us (see below).
+| Before (`embedl-models`)             | After (`flash-head`)         |
+|--------------------------------------|------------------------------|
+| `pip install embedl-models`          | `pip install flash-head`     |
+| `from embedl.models.vllm import LLM` | `from vllm import LLM`       |
+| Custom Docker images                 | Standard vLLM (`vllm serve`) |
+| vLLM 0.10.2 pinned                   | vLLM >= 0.14.0               |
 
 ## License
 
@@ -65,30 +28,4 @@ Please check out the license file for details or contact legal@embedl.com
 
 ## Contact
 
-For commercial licensing, enterprise support, or hardware co-marketing
-opportunities:
-
-Enterprise & Commercial Inquiries
- sales@embedl.com
-
-Technical issues, feedback, and early-access requests
- https://github.com/embedl/embedl-models
-
-More information about Embedl products, and model releases
- https://embedl.com
-
-If you are evaluating on-device inference, building products on NVIDIA RTX/H200,
-or exploring custom optimized models for your workloads, we encourage you to
-reach out. We actively collaborate with teams integrating local AI into
-commercial applications, and we offer:
-- Tools for edge AI optimization, compatibility, profiling, provisioning of
-hardware (Embedl SDK)
-- Online platform for benchmarking models (Embedl HUB)
-- Engineering support for on-prem and edge deployments of models
-- Guidance on migration from baseline Llama/Qwen/Gemma to optimal models
-- Priority access to upcoming model releases
-- Partner co-marketing for qualified deployments
-
-
-For early access to future models or custom porting/optimization work, contact
-us directly at sales@embedl.com.
+models@embedl.com | [embedl.com](https://embedl.com)
